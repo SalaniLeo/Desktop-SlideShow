@@ -1,11 +1,13 @@
 import os
 import time
 import os.path
+from pathlib import Path
 
+home = str(Path.home())
 imgN = 0
-path = "/home/leo/Pictures/wallpapers/mix/"
+path = home + "/Pictures/wallpapers/mix/"
 darkmode = "picture-uri-dark "
-savefilePath = "/home/leo/.cache/background/"
+savefilePath = home + "/.cache/background/"
 savefileName = "background.num"
 savefileLoc = savefilePath + savefileName
 

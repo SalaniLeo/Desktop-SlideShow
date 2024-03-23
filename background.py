@@ -9,7 +9,7 @@ home = str(Path.home())
 
 parser = argparse.ArgumentParser(description='Thanks for using wllp :D, help:')
 parser.add_argument('--path', help='Select which path to use')
-parser.add_argument('--darkmode', help='Choose darkmode if system theme is set to dark')
+parser.add_argument('--darkmode', help='Choose true, false or both based on your system theme')
 args = parser.parse_args()
 
 class SaveConf():

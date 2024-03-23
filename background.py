@@ -1,81 +1,102 @@
 import os
-import sys
 import time
 import os.path
 from pathlib import Path
 import json
 import argparse
- 
-home = str(Path.home())
-imgN = 0
-darkmode = "picture-uri-dark "
-savefilePath = home + "/.cache/background"
-savefileName = "/background.json"
-savefileLoc = savefilePath + savefileName
-imgPath = None
-num_files = None
 
-##ARGPARSE
-parser = argparse.ArgumentParser(description='App to modify ')
-parser.add_argument('--path', help='sets the wallpapers path')
+home = str(Path.home())
+
+parser = argparse.ArgumentParser(description='Thanks for using wllp :D, help:')
+parser.add_argument('--path', help='Select which path to use')
+parser.add_argument('--darkmode', help='Choose darkmode if system theme is set to dark')
 args = parser.parse_args()
 
-imgPath = args.path
+class SaveConf():
+    @staticmethod
+    def save_directory(img_path, json_save_loc):
+        data = load_config(json_save_loc)
+        data["img_path"] = img_path
+        SaveConf._save_json(data, json_save_loc)
 
-#writes data inside json file
-def writeData():
-    #specify the data to write to file
-    data = {"img": imgN, "imgPath": imgPath}
-    #writes the data to file
-    with open(savefileLoc, 'w') as outfile:
-        json.dump(data, outfile,indent=4)
+    @staticmethod
+    def save_darkmode(mode, json_save_loc):
+        data = load_config(json_save_loc)
+        data["dark_mode"] = mode
+        SaveConf._save_json(data, json_save_loc)
 
-#checks if Json file exists
-if(os.path.isfile(savefileLoc)):
-    with open(savefileLoc, 'r') as jsonfile:
-        data = jsonfile.read()
+    @staticmethod
+    def save_current_image(image_number, json_save_loc):
+        data = load_config(json_save_loc)
+        data["image_number"] = image_number
+        SaveConf._save_json(data, json_save_loc)
 
-        jsoncontent = json.loads(data)
-        #reads specified content
-        imgN = jsoncontent['img']
-        if(args.path != None):
-            None
-        else:
-            imgPath = jsoncontent['imgPath']
-else:
-    #sets imgPath to default if json file doesn't exists
-    imgPath = home + "/Pictures"
+    @staticmethod
+    def _save_json(data, json_save_loc):
+        with open(json_save_loc, 'w') as outfile:
+            json.dump(data, outfile, indent=4)
 
-#sets the wallpaper
-def setWallpaper():
-    num_files = len([f for f in os.listdir(imgPath) if os.path.isfile(os.path.join(imgPath, f))])
-    # print(num_files)
-    global imgN
+    def _first_load(image_number, img_path, mode, json_save_loc):
+        open(json_save_loc, "w")
+        data = {"image_number": image_number, "img_path": img_path, "dark_mode": mode}
+        SaveConf._save_json(data, json_save_loc)
+        print(data, json_save_loc)
 
-    ##checks if imgnumber is more than the wallpapers and if so resets to the first
-    if (imgN >= num_files):
-        imgN = 1
-    else:
-        imgN += 1
+def load_config(json_save_loc):
+    if(os.path.isfile(json_save_loc)):
+        with open(json_save_loc, 'r') as jsonfile:
+            data = jsonfile.read()
+            return json.loads(data)
 
-    filename = "img" + str(imgN) + ".*"
-    command = "gsettings set org.gnome.desktop.background " + darkmode + imgPath + filename
 
-    ##executes the command to set wallpaper
+def set_wallpaper(image_number, img_path, images, mode):
+
+    filename = f'{images[image_number]}'
+    command = f'gsettings set org.gnome.desktop.background {mode}"{img_path}/{filename}"'
+
     os.system(command)
-    writeData()
 
-#Creates json folder if not existingfsdfsdffds
-if not os.path.isdir(savefilePath):
-    os.mkdir(savefilePath)
+def main():
 
+    json_save_path = home + "/.cache/wllp"
+    json_save_name = "/wllp.json"
 
-if(args.path != None):
-    if os.path.isdir(args.path):
-        writeData()
-    else:
-        print(args.path + " is not a valid path")
-else:
+    json_save_loc = json_save_path + json_save_name
+
+    if not os.path.isdir(json_save_path):
+        os.mkdir(json_save_path)
+        SaveConf._first_load(0, f'{home}/Pictures', False, json_save_loc)
+
+    if args.path != None:
+        if os.path.isdir(args.path):
+            if len(os.listdir(args.path)) == 0:
+                print(f'The path {args.path} does not contain any image')
+                return
+            SaveConf.save_directory(args.path, json_save_loc)
+        else:
+            print(f'{args.path} is not a valid path.')
+
+    if args.darkmode != None: SaveConf.save_darkmode(args.darkmode, json_save_loc)
+
+    app_data     = load_config(json_save_loc)
+    image_number = app_data['image_number']
+    img_path     = app_data['img_path']
+    images       = os.listdir(img_path)
+    darkmode     = app_data['dark_mode']
+
+    if darkmode:
+        mode = "picture-uri-dark "
+    else: 
+        mode = "picture-uri "
+
     while True:
-        setWallpaper()
-        time.sleep(1200)
+        if image_number >= len(images): image_number = 0
+        set_wallpaper(image_number, img_path, images, mode)
+        SaveConf.save_current_image(image_number, json_save_loc)
+
+        time.sleep(1)
+
+        image_number += 1
+
+if __name__ == "__main__":
+    main()

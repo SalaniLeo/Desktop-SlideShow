@@ -10,6 +10,7 @@ home = str(Path.home())
 parser = argparse.ArgumentParser(description='Thanks for using wllp :D, help:')
 parser.add_argument('--path', help='Select which path to use')
 parser.add_argument('--darkmode', help='Choose true, false or both based on your system theme')
+parser.add_argument('--interval', help='Time between wallpaper changes')
 args = parser.parse_args()
 
 class SaveConf():
@@ -35,6 +36,12 @@ class SaveConf():
     def _save_json(data, json_save_loc):
         with open(json_save_loc, 'w') as outfile:
             json.dump(data, outfile, indent=4)
+
+    @staticmethod
+    def save_interval(interval, json_save_loc):
+        data = load_config(json_save_loc)
+        data["interval"] = interval
+        SaveConf._save_json(data, json_save_loc)
 
     def _first_load(image_number, img_path, mode, json_save_loc):
         open(json_save_loc, "w")
@@ -77,12 +84,14 @@ def main():
             print(f'{args.path} is not a valid path.')
 
     if args.darkmode != None: SaveConf.save_darkmode(args.darkmode, json_save_loc)
+    if args.interval != None: SaveConf.save_interval(args.interval, json_save_loc)
 
     app_data     = load_config(json_save_loc)
     image_number = app_data['image_number']
     img_path     = app_data['img_path']
     images       = os.listdir(img_path)
     darkmode     = app_data['dark_mode']
+    interval     = app_data['interval']
 
     if darkmode:
         mode = "picture-uri-dark "
@@ -94,7 +103,7 @@ def main():
         set_wallpaper(image_number, img_path, images, mode)
         SaveConf.save_current_image(image_number, json_save_loc)
 
-        time.sleep(1)
+        time.sleep(int(interval))
 
         image_number += 1
 
